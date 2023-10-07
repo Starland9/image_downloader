@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class UnsplashDownloader {
@@ -30,12 +31,12 @@ class UnsplashDownloader {
       try {
         final response = await http.get(Uri.parse(imageUrl));
         final bytes = response.bodyBytes;
-        final title = 'image_$i';
+        final title = imageUrl.split('/').last;
 
         PermissionStatus status = await Permission.storage.request();
         if (status.isGranted) {
-          final dir =
-              Directory('/storage/emulated/0/Starland/Images Downloader/');
+          final dir = Directory(
+              '${await getDownloadDirectoryPath()}/Starland/Images Downloader/');
           if (!dir.existsSync()) {
             dir.createSync(recursive: true);
           }
@@ -48,6 +49,12 @@ class UnsplashDownloader {
         throw 'Error downloading image: $e';
       }
     }
+  }
+
+  static Future<String> getDownloadDirectoryPath() async {
+    Directory? downloadDirectory = await getDownloadsDirectory();
+    String downloadPath = downloadDirectory!.path;
+    return downloadPath;
   }
 
   static List<String> _extractImageUrls(String html) {
